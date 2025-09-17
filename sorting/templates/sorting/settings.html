@@ -1,0 +1,465 @@
+{% extends 'sorting/base.html' %}
+
+{% block title %}Settings - Sortownia{% endblock %}
+
+{% block header %}Ustawienia{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/ui-lightness/jquery-ui.css">
+<style>
+    .sortable-list {
+        min-height: 50px;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        list-style: none;
+    }
+    
+    .sortable-item {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 12px 15px;
+        margin-bottom: 8px;
+        cursor: move;
+        display: flex;
+        align-items: center;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        user-select: none;
+        position: relative;
+    }
+    
+    .sortable-item:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        transform: translateY(-1px);
+    }
+    
+    .sortable-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .sortable-item.ui-sortable-helper {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        transform: rotate(2deg);
+        z-index: 1000;
+    }
+    
+    .sortable-placeholder {
+        background-color: #e3f2fd !important;
+        border: 2px dashed #2196f3 !important;
+        border-radius: 6px !important;
+        margin-bottom: 8px !important;
+        height: 60px !important;
+        visibility: visible !important;
+    }
+    
+    .sortable-item .drag-handle {
+        color: #007bff;
+        margin-right: 15px;
+        font-size: 18px;
+        cursor: move;
+        padding: 8px;
+        border-radius: 4px;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+    }
+    
+    .sortable-item .drag-handle:hover {
+        color: #0056b3;
+        background-color: #e9ecef;
+        border-color: #007bff;
+    }
+    
+    .item-info {
+        flex: 1;
+    }
+    
+    .item-name {
+        font-weight: 500;
+        color: #212529;
+        margin-bottom: 2px;
+    }
+    
+    .item-details {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    
+    .color-indicator {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        margin-left: 10px;
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+        pointer-events: none;
+    }
+    
+    .section-card {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 25px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #212529;
+        margin: 0;
+    }
+    
+    .save-btn {
+        min-width: 120px;
+    }
+    
+    .settings-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px 0;
+        margin-bottom: 30px;
+        border-radius: 8px;
+    }
+    
+    .settings-header h1 {
+        margin: 0;
+        font-weight: 700;
+    }
+    
+    .settings-header p {
+        margin: 5px 0 0 0;
+        opacity: 0.9;
+    }
+    
+    /* Fix for jQuery UI conflicts with Bootstrap */
+    .ui-sortable-helper {
+        display: flex !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-header text-center">
+    <div class="container">
+        <h1><i class="fas fa-cog me-2"></i>System Settings</h1>
+        <p>Manage the order of sockets, bag types, and subtypes</p>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Sockets Section -->
+    <div class="section-card">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="fas fa-plug me-2 text-primary"></i>Sockets Order
+            </h2>
+            <button class="btn btn-primary save-btn" onclick="saveOrder('socket')">
+                <i class="fas fa-save me-1"></i>Save Order
+            </button>
+        </div>
+        <div class="sortable-list" id="sockets-list">
+            {% for socket in sockets %}
+            <div class="sortable-item" data-id="{{ socket.id }}">
+                <div class="drag-handle" title="Drag to reorder">
+                    <i class="fas fa-grip-vertical"></i>
+                </div>
+                <div class="item-info">
+                    <div class="item-name">{{ socket.socket_name }}</div>
+                    <div class="item-details">ID: {{ socket.socket_id }} • {{ socket.location }}</div>
+                </div>
+                <div class="color-indicator" style="background-color: {{ socket.socket_color }};"></div>
+            </div>
+            {% empty %}
+            <div class="text-muted text-center py-4">
+                <i class="fas fa-inbox fa-2x mb-2"></i>
+                <div>No active sockets found</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Bag Types Section -->
+    <div class="section-card">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="fas fa-shopping-bag me-2 text-success"></i>Bag Types Order
+            </h2>
+            <button class="btn btn-success save-btn" onclick="saveOrder('bagtype')">
+                <i class="fas fa-save me-1"></i>Save Order
+            </button>
+        </div>
+        <div class="sortable-list" id="bagtypes-list">
+            {% for bagtype in bag_types %}
+            <div class="sortable-item" data-id="{{ bagtype.id }}">
+                <div class="drag-handle" title="Drag to reorder">
+                    <i class="fas fa-grip-vertical"></i>
+                </div>
+                <div class="item-info">
+                    <div class="item-name">{{ bagtype.name }}</div>
+                    <div class="item-details">
+                        Code: {{ bagtype.code }} • Socket: {{ bagtype.socket.socket_name }}
+                        {% if bagtype.parameter %}• Parameters: {{ bagtype.parameter|join:", " }}{% endif %}
+                    </div>
+                </div>
+                <div class="color-indicator" style="background-color: {{ bagtype.color }};"></div>
+            </div>
+            {% empty %}
+            <div class="text-muted text-center py-4">
+                <i class="fas fa-inbox fa-2x mb-2"></i>
+                <div>No active bag types found</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Bag Subtypes Section -->
+    <div class="section-card">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="fas fa-tags me-2 text-warning"></i>Bag Subtypes Order
+            </h2>
+            <button class="btn btn-warning save-btn" onclick="saveOrder('bagsubtype')">
+                <i class="fas fa-save me-1"></i>Save Order
+            </button>
+        </div>
+        <div class="sortable-list" id="bagsubtypes-list">
+            {% for subtype in bag_subtypes %}
+            <div class="sortable-item" data-id="{{ subtype.id }}">
+                <div class="drag-handle" title="Drag to reorder">
+                    <i class="fas fa-grip-vertical"></i>
+                </div>
+                <div class="item-info">
+                    <div class="item-name">{{ subtype.name }}</div>
+                    <div class="item-details">
+                        {% if subtype.code %}Code: {{ subtype.code }} • {% endif %}
+                        Bag Type: {{ subtype.bag_type.name }}
+                    </div>
+                </div>
+                <div class="color-indicator" style="background-color: {{ subtype.color }};"></div>
+            </div>
+            {% empty %}
+            <div class="text-muted text-center py-4">
+                <i class="fas fa-inbox fa-2x mb-2"></i>
+                <div>No active bag subtypes found</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="text-center mb-4">
+        <a href="{% url 'sorting:dashboard' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Load jQuery UI from a different CDN -->
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
+<script>
+console.log('Starting script initialization...');
+
+// Test jQuery and jQuery UI availability
+$(document).ready(function() {
+    console.log('DOM ready, testing jQuery and jQuery UI...');
+    console.log('jQuery version:', typeof $ !== 'undefined' ? $.fn.jquery : 'NOT LOADED');
+    console.log('jQuery UI available:', typeof $.ui !== 'undefined');
+    console.log('Sortable available:', typeof $.fn.sortable !== 'undefined');
+    
+    // If jQuery UI is not available, try to load it differently
+    if (typeof $.fn.sortable === 'undefined') {
+        console.error('jQuery UI sortable not available!');
+        // Show error message to user
+        $('.sortable-list').prepend('<div class="alert alert-warning">Drag & drop functionality is not available. Please refresh the page.</div>');
+        return;
+    }
+    
+    // Initialize sortable with more basic options
+    try {
+        $('.sortable-list').sortable({
+            handle: '.drag-handle',
+            cursor: 'move',
+            opacity: 0.6,
+            revert: 100,
+            start: function(e, ui) {
+                console.log('Drag started!');
+                ui.item.css('background-color', '#f0f8ff');
+            },
+            stop: function(e, ui) {
+                console.log('Drag stopped!');
+                ui.item.css('background-color', '');
+            },
+            update: function(e, ui) {
+                console.log('Order changed!');
+            }
+        });
+        
+        console.log('Sortable initialized successfully!');
+        
+        // Test if it worked
+        $('.sortable-list').each(function() {
+            var listId = $(this).attr('id');
+            console.log('List', listId, 'has ui-sortable class:', $(this).hasClass('ui-sortable'));
+        });
+        
+    } catch (error) {
+        console.error('Error initializing sortable:', error);
+    }
+});
+
+// Add manual drag test
+$(document).on('mousedown', '.drag-handle', function(e) {
+    console.log('Mouse down on drag handle!');
+});
+
+$(document).on('mouseup', '.drag-handle', function(e) {
+    console.log('Mouse up on drag handle!');
+});
+
+// Fallback: Native HTML5 Drag and Drop
+function initNativeDragDrop() {
+    console.log('Initializing native drag and drop fallback...');
+    
+    $('.sortable-item').each(function() {
+        this.draggable = true;
+    });
+    
+    let draggedElement = null;
+    
+    $('.sortable-item').on('dragstart', function(e) {
+        draggedElement = this;
+        console.log('Native drag started');
+        $(this).css('opacity', '0.5');
+    });
+    
+    $('.sortable-item').on('dragend', function(e) {
+        console.log('Native drag ended');
+        $(this).css('opacity', '');
+    });
+    
+    $('.sortable-list').on('dragover', function(e) {
+        e.preventDefault();
+    });
+    
+    $('.sortable-item').on('dragover', function(e) {
+        e.preventDefault();
+        const afterElement = getDragAfterElement($(this).parent()[0], e.clientY);
+        const draggable = draggedElement;
+        
+        if (afterElement == null) {
+            $(this).parent().append(draggable);
+        } else {
+            $(this).parent()[0].insertBefore(draggable, afterElement);
+        }
+    });
+    
+    function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.sortable-item:not(.dragging)')];
+        
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+}
+
+// Try jQuery UI first, then fallback to native
+setTimeout(function() {
+    if (!$('.sortable-list').hasClass('ui-sortable')) {
+        console.log('jQuery UI sortable failed, using native drag and drop');
+        initNativeDragDrop();
+    }
+}, 1000);
+
+function saveOrder(modelType) {
+    let listId = '';
+    let buttonSelector = '';
+    
+    if (modelType === 'socket') {
+        listId = '#sockets-list';
+        buttonSelector = 'button[onclick="saveOrder(\'socket\')"]';
+    } else if (modelType === 'bagtype') {
+        listId = '#bagtypes-list';
+        buttonSelector = 'button[onclick="saveOrder(\'bagtype\')"]';
+    } else if (modelType === 'bagsubtype') {
+        listId = '#bagsubtypes-list';
+        buttonSelector = 'button[onclick="saveOrder(\'bagsubtype\')"]';
+    }
+    
+    const $button = $(buttonSelector);
+    const originalText = $button.html();
+    
+    // Show loading state
+    $button.html('<i class="fas fa-spinner fa-spin me-1"></i>Saving...').prop('disabled', true);
+    
+    // Get the order
+    const order = [];
+    $(listId + ' .sortable-item').each(function() {
+        order.push($(this).data('id'));
+    });
+    
+    // Create form data
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    formData.append('model_type', modelType);
+    order.forEach(id => formData.append('order[]', id));
+    
+    // Send AJAX request
+    fetch('{% url "sorting:update_order" %}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (response.ok) {
+            // Show success feedback
+            $button.html('<i class="fas fa-check me-1"></i>Saved!').removeClass('btn-primary btn-success btn-warning').addClass('btn-outline-success');
+            
+            // Reset button after 2 seconds
+            setTimeout(() => {
+                $button.html(originalText).removeClass('btn-outline-success');
+                if (modelType === 'socket') $button.addClass('btn-primary');
+                else if (modelType === 'bagtype') $button.addClass('btn-success');
+                else if (modelType === 'bagsubtype') $button.addClass('btn-warning');
+                $button.prop('disabled', false);
+            }, 2000);
+        } else {
+            throw new Error('Save failed');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        $button.html('<i class="fas fa-exclamation-triangle me-1"></i>Error').removeClass('btn-primary btn-success btn-warning').addClass('btn-danger');
+        
+        // Reset button after 3 seconds
+        setTimeout(() => {
+            $button.html(originalText).removeClass('btn-danger');
+            if (modelType === 'socket') $button.addClass('btn-primary');
+            else if (modelType === 'bagtype') $button.addClass('btn-success');
+            else if (modelType === 'bagsubtype') $button.addClass('btn-warning');
+            $button.prop('disabled', false);
+        }, 3000);
+    });
+}
+</script>
+{% endblock %}

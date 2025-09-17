@@ -1,0 +1,189 @@
+{% extends 'sorting/base.html' %}
+
+{% block title %}Wybierz Typ Worka - Krok 2 - Sortownia Odzieży{% endblock %}
+
+{% block header %}Dodaj Worek - Krok 2{% endblock %}
+
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Step Indicator -->
+    <div class="steps-indicator mb-4">
+        <div class="step step-1 completed">
+            <div class="step-circle">1</div>
+            <div class="step-label">Gniazdo</div>
+        </div>
+        <div class="step step-2 active">
+            <div class="step-circle">2</div>
+            <div class="step-label">Typ Worka</div>
+        </div>
+        <div class="step step-3">
+            <div class="step-circle">3</div>
+            <div class="step-label">Waga</div>
+        </div>
+        <div class="step step-4">
+            <div class="step-circle"><i class="fas fa-check"></i></div>
+            <div class="step-label">Podsumowanie</div>
+        </div>
+    </div>
+
+    <!-- Step 2: Bag Type Selection -->
+    <div class="form-section">
+        <h2 class="form-section-title">
+            <i class="fas fa-tags me-2"></i> Wybierz Typ Worka
+        </h2>
+        
+        <!-- Breadcrumb info -->
+        <div class="breadcrumb-info">
+            <small class="text-muted">Wybrane Gniazdo:</small>
+            <strong class="text-primary">{{ socket_info }}</strong>
+        </div>
+        
+        <form method="post" id="bagTypeWizardForm">
+            {% csrf_token %}
+            
+            <div class="category-grid">
+                {% for bag_type in form.bag_type.field.queryset %}
+                <div class="category-card" style="background-color: {{ bag_type.color }};" onclick="selectBagType({{ bag_type.id }});">
+                    <input type="radio" name="bag_type"
+                           value="{{ bag_type.id }}"
+                           id="id_bag_type_{{ bag_type.id }}"
+                           class="category-radio"
+                           {% if form.bag_type.value == bag_type.id %}checked{% endif %}>
+                    <div class="card-body" style="padding: 15px; width: 100%; height: 100%;">
+                        <div class="category-name">{{ bag_type.name }}</div>
+                        <div class="category-details">
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if form.bag_type.errors %}
+            <div class="alert alert-danger mt-3">
+                {{ form.bag_type.errors }}
+            </div>
+            {% endif %}
+
+            <!-- Parameter Selection -->
+            <div id="parameterSelection" style="display: none;">
+                <hr class="my-4">
+                <h4 class="mb-3">
+                    <i class="fas fa-tags me-2"></i> Wybierz Parametr
+                </h4>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="category-card" style="background-color: #6e6c67;" onclick="selectParameter('Standard');">
+                            <input type="radio" name="parameter" value="Standard" id="id_parameter_standard" class="category-radio">
+                            <div class="card-body" style="padding: 15px; width: 100%; height: 100%;">
+                                <i class="fas fa-star" style="font-size: 2rem; margin-bottom: 8px;"></i>
+                                <div class="category-name">Standard</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="category-card" style="background-color: #997712;" onclick="selectParameter('Extra');">
+                            <input type="radio" name="parameter" value="Extra" id="id_parameter_extra" class="category-radio">
+                            <div class="card-body" style="padding: 15px; width: 100%; height: 100%;">
+                                <i class="fas fa-crown" style="font-size: 2rem; margin-bottom: 8px;"></i>
+                                <div class="category-name">Extra</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="wizard-buttons">
+                <a href="{% url 'sorting:step1_socket_selection' %}" class="btn btn-outline-secondary btn-prev btn-tablet">
+                    <i class="fas fa-arrow-left me-1"></i> Wstecz
+                </a>
+                <div></div> <!-- Empty div for spacing -->
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Parse bag type parameters from Django
+const bagTypeParameters = {{ bag_type_parameters_json|safe }};
+
+function selectBagType(bagTypeId) {
+    // Remove selected class from all bag type cards
+    const bagTypeCards = document.querySelectorAll('.category-grid .category-card');
+    bagTypeCards.forEach(function(card) {
+        card.classList.remove('selected');
+    });
+    
+    // Add selected class to clicked card
+    const selectedCard = document.querySelector(`input[value="${bagTypeId}"]`).closest('.category-card');
+    selectedCard.classList.add('selected');
+    
+    // Check the corresponding radio button
+    const radioButton = document.getElementById(`id_bag_type_${bagTypeId}`);
+    if (radioButton) {
+        radioButton.checked = true;
+    }
+    
+    // Check if this bag type has multiple parameters
+    const parameterSelection = document.getElementById('parameterSelection');
+    if (bagTypeParameters[bagTypeId]) {
+        // Show parameter selection
+        parameterSelection.style.display = 'block';
+        
+        // Clear any previous parameter selection
+        const parameterRadios = document.querySelectorAll('input[name="parameter"]');
+        parameterRadios.forEach(function(radio) {
+            radio.checked = false;
+        });
+        
+        // Remove selected class from parameter cards
+        const parameterCards = parameterSelection.querySelectorAll('.category-card');
+        parameterCards.forEach(function(card) {
+            card.classList.remove('selected');
+        });
+    } else {
+        // Hide parameter selection and auto-submit
+        parameterSelection.style.display = 'none';
+        
+        // Auto-submit after short delay for bag types without parameter choice
+        setTimeout(function() {
+            document.getElementById('bagTypeWizardForm').submit();
+        }, 200);
+    }
+}
+
+function selectParameter(parameter) {
+    // Remove selected class from all parameter cards
+    const parameterCards = document.querySelectorAll('#parameterSelection .category-card');
+    parameterCards.forEach(function(card) {
+        card.classList.remove('selected');
+    });
+    
+    // Add selected class to clicked card
+    const selectedCard = document.querySelector(`input[value="${parameter}"]`).closest('.category-card');
+    selectedCard.classList.add('selected');
+    
+    // Check the corresponding radio button
+    const radioButton = document.getElementById(`id_parameter_${parameter.toLowerCase()}`);
+    if (radioButton) {
+        radioButton.checked = true;
+    }
+    
+    // Auto-submit after short delay for visual feedback
+    setTimeout(function() {
+        document.getElementById('bagTypeWizardForm').submit();
+    }, 200);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Pre-select any checked radio button
+    const checkedRadio = document.querySelector('input[type="radio"]:checked');
+    if (checkedRadio) {
+        const parentCard = checkedRadio.closest('.category-card');
+        if (parentCard) {
+            parentCard.classList.add('selected');
+        }
+    }
+});
+</script>
+{% endblock %}

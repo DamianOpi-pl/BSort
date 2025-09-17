@@ -1,0 +1,77 @@
+{% extends 'sorting/base.html' %}
+
+{% block title %}Sorted Bags - Sortownia{% endblock %}
+
+{% block content %}
+<h1>Posortowane Worki</h1>
+
+<div class="filters">
+    <form method="get" class="filter-form">
+        <div class="form-group">
+            <label for="destination">Miejsce Przeznaczenia:</label>
+            <select name="destination" id="destination">
+                <option value="">Wszystkie Miejsca Przeznaczenia</option>
+                {% for value, label in destinations %}
+                <option value="{{ value }}" {% if current_filters.destination == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="status">Status:</label>
+            <select name="status" id="status">
+                <option value="">Wszystkie Statusy</option>
+                {% for value, label in statuses %}
+                <option value="{{ value }}" {% if current_filters.status == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn">Filtruj</button>
+        <a href="{% url 'sorting:sorted_bag_list' %}" class="btn">Wyczyść</a>
+    </form>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Original Bag ID</th>
+            <th>Clothing Type</th>
+            <th>Destination</th>
+            <th>Status</th>
+            <th>Quality Check</th>
+            <th>Tracking Number</th>
+            <th>Created</th>
+            <th>Shipped</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for sorted_bag in sorted_bags %}
+        <tr>
+            <td><a href="{% url 'sorting:bag_detail' sorted_bag.original_bag.id %}">{{ sorted_bag.original_bag.bag_id }}</a></td>
+            <td>{{ sorted_bag.original_bag.get_clothing_type_display }}</td>
+            <td>{{ sorted_bag.get_destination_display }}</td>
+            <td>
+                <span class="status-badge 
+                    {% if sorted_bag.status == 'delivered' %}status-processed
+                    {% else %}status-pending{% endif %}">
+                    {{ sorted_bag.get_status_display }}
+                </span>
+            </td>
+            <td>
+                {% if sorted_bag.final_quality_check %}
+                <span class="status-badge status-processed">✓ Passed</span>
+                {% else %}
+                <span class="status-badge status-pending">Pending</span>
+                {% endif %}
+            </td>
+            <td>{{ sorted_bag.tracking_number|default:"-" }}</td>
+            <td>{{ sorted_bag.created_at|date:"M d, Y" }}</td>
+            <td>{{ sorted_bag.shipped_at|date:"M d, Y"|default:"-" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="8">No sorted bags found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
