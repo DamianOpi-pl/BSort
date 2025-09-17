@@ -1,0 +1,198 @@
+{% extends 'sorting/base.html' %}
+
+{% block title %}Podsumowanie - Krok 4 - Sortownia Odzieży{% endblock %}
+
+{% block header %}Dodaj Worek - Podsumowanie{% endblock %}
+
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Step Indicator -->
+    <div class="steps-indicator mb-4">
+        <div class="step step-1 completed">
+            <div class="step-circle">1</div>
+            <div class="step-label">Gniazdo</div>
+        </div>
+        <div class="step step-2 completed">
+            <div class="step-circle">2</div>
+            <div class="step-label">Typ Worka</div>
+        </div>
+        <div class="step step-3 completed">
+            <div class="step-circle">3</div>
+            <div class="step-label">Waga</div>
+        </div>
+        <div class="step step-4 active">
+            <div class="step-circle"><i class="fas fa-check"></i></div>
+            <div class="step-label">Podsumowanie</div>
+        </div>
+    </div>
+
+    <!-- Step 4: Summary Section -->
+    <div class="form-section">
+        <h2 class="form-section-title text-center">
+            <i class="fas fa-check-circle me-2"></i> Podsumowanie
+        </h2>
+
+        <div class="summary-content">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="summary-item">
+                        <div class="summary-item-title">
+                            <i class="fas fa-plug me-2"></i>Gniazdo
+                        </div>
+                        <div class="summary-item-content">
+                            <div class="socket-display">
+                                <div class="icon-badge">
+                                    <i class="fas fa-plug"></i>
+                                </div>
+                                <div>
+                                    <strong>{{ form_data.socket_info }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="summary-item">
+                        <div class="summary-item-title">
+                            <i class="fas fa-shopping-bag me-2"></i>Typ Worka
+                        </div>
+                        <div class="summary-item-content">
+                            <div class="bagtype-display">
+                                <div class="icon-badge">
+                                    <i class="fas fa-shopping-bag"></i>
+                                </div>
+                                <div>
+                                    <strong>{{ form_data.bag_type_display }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="summary-item">
+                        <div class="summary-item-title">
+                            <i class="fas fa-weight me-2"></i>Waga
+                        </div>
+                        <div class="summary-item-content">
+                            <div class="weight-display">{{ form_data.weight_kg }} kg</div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if form_data.notes %}
+                <div class="col-md-6">
+                    <div class="summary-item">
+                        <div class="summary-item-title">
+                            <i class="fas fa-sticky-note me-2"></i>Notatki
+                        </div>
+                        <div class="summary-item-content">
+                            {{ form_data.notes }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <form method="post" id="summaryWizardForm">
+            {% csrf_token %}
+            
+            <div class="form-check form-switch mb-4">
+                {{ form.confirm }}
+                <label class="form-check-label" for="{{ form.confirm.id_for_label }}">
+                    <i class="fas fa-check me-2"></i>{{ form.confirm.label }}
+                </label>
+            </div>
+
+            <div class="wizard-buttons">
+                <a href="{% url 'sorting:step3_weight_entry' %}" class="btn btn-outline-secondary btn-prev btn-tablet">
+                    <i class="fas fa-arrow-left me-1"></i> Wstecz
+                </a>
+                <button type="submit" class="btn btn-success btn-tablet" name="create_bag">
+                    <i class="fas fa-check me-2"></i> Utwórz Worek
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-focus on the confirm checkbox
+    const confirmCheckbox = document.querySelector('input[name="confirm"]');
+    if (confirmCheckbox) {
+        confirmCheckbox.focus();
+    }
+    
+    // Add confirmation dialog
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const confirmCheckbox = this.querySelector('input[name="confirm"]');
+            
+            if (!confirmCheckbox.checked) {
+                e.preventDefault();
+                alert('Proszę potwierdź, że chcesz utworzyć ten worek.');
+                confirmCheckbox.focus();
+                return false;
+            }
+            
+            e.preventDefault();
+            
+            const confirmCreate = confirm('Czy na pewno chcesz utworzyć ten worek?');
+            if (confirmCreate) {
+                // Show loading state
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Tworzenie...';
+                submitBtn.disabled = true;
+                
+                // Submit the form after a short delay to show the loading state
+                setTimeout(() => {
+                    this.submit();
+                }, 200);
+            }
+        });
+    }
+    
+    // Add keyboard shortcut for submit (Enter key)
+    document.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+            const submitBtn = document.querySelector('button[type="submit"]');
+            const confirmCheckbox = document.querySelector('input[name="confirm"]');
+            
+            if (submitBtn && !submitBtn.disabled && confirmCheckbox && confirmCheckbox.checked) {
+                e.preventDefault();
+                submitBtn.click();
+            }
+        }
+    });
+    
+    // Enable/disable submit button based on confirmation
+    const confirmCheckbox = document.querySelector('input[name="confirm"]');
+    const submitBtn = document.querySelector('button[type="submit"]');
+    
+    if (confirmCheckbox && submitBtn) {
+        function toggleSubmitButton() {
+            if (confirmCheckbox.checked) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('btn-outline-success');
+                submitBtn.classList.add('btn-success');
+            } else {
+                submitBtn.disabled = true;
+                submitBtn.classList.remove('btn-success');
+                submitBtn.classList.add('btn-outline-success');
+            }
+        }
+        
+        confirmCheckbox.addEventListener('change', toggleSubmitButton);
+        toggleSubmitButton(); // Initial state
+    }
+});
+</script>
+{% endblock %}

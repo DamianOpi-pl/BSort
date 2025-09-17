@@ -1,0 +1,177 @@
+{% extends 'sorting/base.html' %}
+
+{% block title %}Worek Utworzony Pomyślnie - Sortownia Odzieży{% endblock %}
+
+{% block header %}Worek Utworzony Pomyślnie{% endblock %}
+
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="form-section">
+        <div class="success-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        
+        <h2 class="success-title">Worek Utworzony Pomyślnie!</h2>
+        
+        <div class="success-details">
+            <div class="detail-row">
+                <span class="detail-label">ID Worka:</span>
+                <span class="detail-value">{{ bag.bag_id }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Gniazdo:</span>
+                <span class="detail-value">{{ socket_name }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Typ Worka:</span>
+                <span class="detail-value">{{ bag.bag_type.name }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Waga:</span>
+                <span class="detail-value">{{ bag.weight_kg }} kg</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Utworzony:</span>
+                <span class="detail-value">{{ bag.received_at|date:"M d, Y H:i" }}</span>
+            </div>
+        </div>
+        
+        <div class="countdown-container" id="countdownContainer">
+            <div class="countdown-text" id="countdownText">
+                Automatyczne dodawanie kolejnego worka do tego samego gniazda za <span id="countdownTimer">5</span> sekund...
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </div>
+
+        <div class="continue-options">
+            <h4>Co chcesz zrobić dalej?</h4>
+            
+            <form method="post" action="{% url 'sorting:continue_or_finish' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="continue_same_socket">
+                <button type="submit" class="btn btn-option btn-primary-option">
+                    <i class="fas fa-plus-circle"></i>
+                    <div class="btn-option-content">
+                        <div>Dodaj Kolejny Worek</div>
+                        <span class="btn-subtitle">To samo gniazdo: {{ socket_name }}</span>
+                    </div>
+                </button>
+            </form>
+            
+            <form method="post" action="{% url 'sorting:continue_or_finish' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="continue_new_socket">
+                <button type="submit" class="btn btn-option btn-secondary-option">
+                    <i class="fas fa-exchange-alt"></i>
+                    <div class="btn-option-content">
+                        <div>Dodaj Worek (Inne Gniazdo)</div>
+                        <span class="btn-subtitle">Wybierz inne gniazdo</span>
+                    </div>
+                </button>
+            </form>
+            
+            <form method="post" action="{% url 'sorting:continue_or_finish' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="finish">
+                <button type="submit" class="btn btn-option btn-success-option">
+                    <i class="fas fa-check-double"></i>
+                    <div class="btn-option-content">
+                        <div>Zakończ</div>
+                        <span class="btn-subtitle">Przejdź do listy worków</span>
+                    </div>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-focus on the first continue button
+    const firstButton = document.querySelector('.btn-option');
+    if (firstButton) {
+        firstButton.focus();
+    }
+    
+    // Countdown functionality
+    let countdown = 5;
+    let countdownActive = true;
+    const countdownTimer = document.getElementById('countdownTimer');
+    const progressBar = document.getElementById('progressBar');
+    const countdownContainer = document.getElementById('countdownContainer');
+    
+    // Initialize progress bar
+    progressBar.style.width = '100%';
+    
+    const updateCountdown = () => {
+        if (!countdownActive) return;
+        
+        countdownTimer.textContent = countdown;
+        const progressPercent = (countdown / 5) * 100;
+        progressBar.style.width = progressPercent + '%';
+        
+        if (countdown <= 0) {
+            // Auto-submit the "Add Another Bag" form
+            document.querySelector('input[value="continue_same_socket"]').closest('form').submit();
+            return;
+        }
+        
+        countdown--;
+    };
+    
+    // Start the countdown
+    const countdownInterval = setInterval(updateCountdown, 1000);
+    
+    // Stop countdown if user interacts with any button
+    const stopCountdown = () => {
+        countdownActive = false;
+        clearInterval(countdownInterval);
+        countdownContainer.style.display = 'none';
+    };
+    
+    // Add click listeners to all buttons to stop countdown
+    document.querySelectorAll('.btn-option').forEach(button => {
+        button.addEventListener('click', stopCountdown);
+    });
+    
+    // Add keyboard shortcuts
+    document.addEventListener('keypress', function(e) {
+        if (e.key === '1') {
+            e.preventDefault();
+            stopCountdown();
+            document.querySelector('input[value="continue_same_socket"]').closest('form').submit();
+        } else if (e.key === '2') {
+            e.preventDefault();
+            stopCountdown();
+            document.querySelector('input[value="continue_new_socket"]').closest('form').submit();
+        } else if (e.key === '3' || e.key === 'Enter') {
+            e.preventDefault();
+            stopCountdown();
+            document.querySelector('input[value="finish"]').closest('form').submit();
+        } else if (e.key === 'Escape') {
+            // Allow user to cancel countdown with Escape key
+            stopCountdown();
+        }
+    });
+    
+    // Add visual feedback on button press
+    const buttons = document.querySelectorAll('.btn-option');
+    buttons.forEach(button => {
+        button.addEventListener('mousedown', function() {
+            this.style.transform = 'scale(0.98)';
+        });
+        
+        button.addEventListener('mouseup', function() {
+            this.style.transform = '';
+        });
+        
+        button.addEventListener('mouseleave', function() {
+            this.style.transform = '';
+        });
+    });
+});
+</script>
+{% endblock %}

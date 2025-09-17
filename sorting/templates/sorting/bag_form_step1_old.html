@@ -1,0 +1,59 @@
+{% extends 'sorting/base.html' %}
+
+{% block title %}Step 1: Select Socket - Sortownia{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Step 1: Select Socket</h2>
+    <div class="progress mb-3">
+        <div class="progress-bar" role="progressbar" style="width: 25%">25%</div>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group mb-3">
+            <label for="{{ form.socket.id_for_label }}" class="form-label">Choose a Socket:</label>
+            {{ form.socket }}
+        </div>
+        
+        <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary">Next →</button>
+        </div>
+    </form>
+</div>
+
+<style>
+.progress {
+    height: 10px;
+    background-color: #e9ecef;
+    border-radius: 5px;
+}
+
+.progress-bar {
+    background-color: #3498db;
+    transition: width 0.3s ease;
+}
+
+.form-control {
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 100%;
+}
+
+.form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.btn-primary {
+    background-color: #3498db;
+    border-color: #3498db;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
+}
+</style>
+{% endblock %}

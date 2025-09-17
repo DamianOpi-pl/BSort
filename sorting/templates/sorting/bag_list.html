@@ -1,0 +1,123 @@
+{% extends 'sorting/base.html' %}
+
+{% block title %}Bags - Sortownia Odzieży{% endblock %}
+
+{% block header %}Worki Odzieży{% endblock %}
+
+
+{% block content %}
+<!-- Summary Stats -->
+<div class="stats-summary">
+    <div class="summary-card">
+        <div class="summary-number">{{ bags|length }}</div>
+        <div class="summary-label">Wszystkie Worki</div>
+    </div>
+    <div class="summary-card success">
+        <div class="summary-number">
+            {{ bags|length }}
+            {% comment %}{{ bags|select:'is_processed'|length }}{% endcomment %}
+        </div>
+        <div class="summary-label">Przetworzone</div>
+    </div>
+    <div class="summary-card warning">
+        <div class="summary-number">
+            0
+            {% comment %}{{ bags|reject:'is_processed'|length }}{% endcomment %}
+        </div>
+        <div class="summary-label">Oczekujące</div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="filter-section">
+    <h3 class="filter-title">
+        <i class="fas fa-filter"></i> Filtruj Worki
+    </h3>
+    <form method="get" class="filter-form">
+        <div class="form-group">
+            <label for="status">Status:</label>
+            <select name="status" id="status" class="form-control">
+                <option value="">Wszystkie Statusy</option>
+                <option value="pending" {% if current_filters.status == 'pending' %}selected{% endif %}>Oczekujące</option>
+                <option value="processed" {% if current_filters.status == 'processed' %}selected{% endif %}>Przetworzone</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="clothing_type">Typ Worka:</label>
+            <select name="clothing_type" id="clothing_type" class="form-control">
+                <option value="">Wszystkie Typy</option>
+                {% for value, label in clothing_types %}
+                <option value="{{ value }}" {% if current_filters.clothing_type == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-buttons">
+            <button type="submit" class="btn btn-gradient-primary">
+                <i class="fas fa-search me-1"></i> Filter
+            </button>
+            <a href="{% url 'sorting:bag_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-times me-1"></i> Clear
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Bags List -->
+<div class="bags-container">
+    {% for bag in bags %}
+    <div class="bag-item">
+        <div class="bag-header">
+            <div class="bag-id">
+                <i class="fas fa-shopping-bag me-2"></i>
+                {{ bag.bag_id }}
+            </div>
+            <div class="bag-status">
+                {% if bag.is_processed %}
+                    <i class="fas fa-check me-1"></i> Processed
+                {% else %}
+                    <i class="fas fa-clock me-1"></i> Pending
+                {% endif %}
+            </div>
+        </div>
+        <div class="bag-content">
+            <div class="bag-details">
+                <div class="detail-item">
+                    <div class="detail-label">Socket</div>
+                    <div class="detail-value">{{ bag.socket.socket_name }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Type</div>
+                    <div class="detail-value">{{ bag.bag_type.name|default:"-" }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Weight</div>
+                    <div class="detail-value">{{ bag.weight_kg|default:"-" }} kg</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Received</div>
+                    <div class="detail-value">{{ bag.received_at|date:"M d, H:i" }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Sorting Person</div>
+                    <div class="detail-value">{{ bag.sorting_person.name|default:"-" }}</div>
+                </div>
+            </div>
+            <div class="bag-actions">
+                <a href="{% url 'sorting:bag_detail' bag.id %}" class="btn-view">
+                    <i class="fas fa-eye me-1"></i> View Details
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+        <i class="fas fa-shopping-bag"></i>
+        <h3>No bags found</h3>
+        <p>Try adjusting your filters or add a new bag to get started.</p>
+        <a href="{% url 'sorting:step1_socket_selection' %}" class="btn btn-gradient-primary mt-3">
+            <i class="fas fa-plus me-1"></i> Add First Bag
+        </a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends 'sorting/base.html' %}
+
+{% block title %}Panel Główny - Sortownia Odzieży{% endblock %}
+
+{% block header %}Panel Główny{% endblock %}
+
+
+{% block content %}
+
+
+<div class="dashboard-stats">
+
+    
+    <div class="stat-card personnel fade-in-up" onclick="window.location.href='{% url 'sorting:bag_list' %}'" style="animation-delay: 0.2s">
+        <div class="stat-icon">
+            <i class="fas fa-shopping-bag"></i>
+        </div>
+        <div class="stat-number">{{ total_bags }}</div>
+        <div class="stat-label">Wszystkie Worki</div>
+    </div>
+    
+    <div class="stat-card personnel fade-in-up" onclick="window.location.href='{% url 'sorting:bag_list' %}?status=processed'" style="animation-delay: 0.3s">
+        <div class="stat-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-number">{{ processed_bags }}</div>
+        <div class="stat-label">Przetworzone Worki</div>
+    </div>
+    
+    <div class="stat-card personnel fade-in-up {% if pending_bags > 0 %}pulse{% endif %}" onclick="window.location.href='{% url 'sorting:bag_list' %}?status=pending'" style="animation-delay: 0.4s">
+        <div class="stat-icon">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-number">{{ pending_bags }}</div>
+        <div class="stat-label">Oczekujące Worki</div>
+    </div>
+    
+    <div class="stat-card personnel fade-in-up" onclick="window.location.href='{% url 'sorting:sorted_bag_list' %}'" style="animation-delay: 0.5s">
+        <div class="stat-icon">
+            <i class="fas fa-sort-amount-up"></i>
+        </div>
+        <div class="stat-number">{{ sorted_bags }}</div>
+        <div class="stat-label">Posortowane Worki</div>
+    </div>
+
+</div>
+
+<div class="quick-actions">
+    <a href="{% url 'sorting:step1_socket_selection' %}" class="action-card">
+        <div class="action-icon primary">
+            <i class="fas fa-plus-circle"></i>
+        </div>
+        <div class="action-title">Dodaj Nowy Worek</div>
+        <div class="action-description">Rozpocznij proces dodawania nowego worka do gniazda</div>
+    </a>
+    
+    <a href="{% url 'sorting:bag_list' %}?status=pending" class="action-card">
+        <div class="action-icon warning">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="action-title">Pokaż Oczekujące Worki</div>
+        <div class="action-description">Zobacz wszystkie worki oczekujące na przetworzenie</div>
+    </a>
+    
+    <a href="{% url 'sorting:socket_list' %}" class="action-card">
+        <div class="action-icon success">
+            <i class="fas fa-cogs"></i>
+        </div>
+        <div class="action-title">Zarządzaj Gniazdami</div>
+        <div class="action-description">Skonfiguruj i monitoruj wszystkie połączenia gniazd</div>
+    </a>
+    
+    <a href="/admin/sorting/" class="action-card">
+        <div class="action-icon info">
+            <i class="fas fa-tools"></i>
+        </div>
+        <div class="action-title">Panel Administracyjny</div>
+        <div class="action-description">Dostęp do zaawansowanej konfiguracji i zarządzania systemem</div>
+    </a>
+</div>
+
+<div class="recent-activity">
+    <h3>
+        <i class="fas fa-chart-line"></i>
+        Status Systemu
+    </h3>
+    <div class="activity-item">
+        <div class="activity-icon success">
+            <i class="fas fa-check"></i>
+        </div>
+        <div class="activity-content">
+            <div class="activity-title">System Online</div>
+            <div class="activity-time">Wszystkie systemy działają</div>
+        </div>
+    </div>
+    <div class="activity-item">
+        <div class="activity-icon info">
+            <i class="fas fa-database"></i>
+        </div>
+        <div class="activity-content">
+            <div class="activity-title">Baza Danych Połączona</div>
+            <div class="activity-time">{{ total_bags }} worków w bazie danych</div>
+        </div>
+    </div>
+    {% if pending_bags > 0 %}
+    <div class="activity-item">
+        <div class="activity-icon warning">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="activity-content">
+            <div class="activity-title">Wykryto Oczekujące Worki</div>
+            <div class="activity-time">{{ pending_bags }} worków oczekuje na przetworzenie</div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

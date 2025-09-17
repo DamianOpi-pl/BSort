@@ -1,0 +1,201 @@
+{% extends 'sorting/base.html' %}
+
+{% block title %}Wybierz Gniazdo - Krok 1 - Sortownia Odzieży{% endblock %}
+
+{% block header %}Dodaj Worek - Krok 1{% endblock %}
+
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Step Indicator -->
+    <div class="steps-indicator mb-4">
+        <div class="step step-1 active">
+            <div class="step-circle">1</div>
+            <div class="step-label">Gniazdo</div>
+        </div>
+        <div class="step step-2">
+            <div class="step-circle">2</div>
+            <div class="step-label">Typ Worka</div>
+        </div>
+        <div class="step step-3">
+            <div class="step-circle">3</div>
+            <div class="step-label">Waga</div>
+        </div>
+        <div class="step step-4">
+            <div class="step-circle"><i class="fas fa-check"></i></div>
+            <div class="step-label">Podsumowanie</div>
+        </div>
+    </div>
+
+    <!-- Step 1: Socket Selection -->
+    <div class="form-section">
+        <h2 class="form-section-title">
+            <i class="fas fa-plug"></i> Wybierz Gniazdo
+        </h2>
+        
+        <form method="post" id="socketWizardForm">
+            {% csrf_token %}
+            
+            <div class="category-grid">
+                {% for socket in form.socket.field.queryset %}
+                <div class="category-card" style="background-color: {{ socket.socket_color }};" onclick="selectSocket({{ socket.id }});">
+                    <input type="radio" name="socket"
+                           value="{{ socket.id }}"
+                           id="id_socket_{{ socket.id }}"
+                           class="category-radio"
+                           {% if form.socket.value == socket.id %}checked{% endif %}>
+                    <div class="card-body" style="padding: 15px; width: 100%; height: 100%;">
+                        <i class="fas fa-plug"></i>
+                        <div class="category-name">{{ socket.socket_name }}</div>
+                    </div>
+                </div>
+                {% empty %}
+                <p>Nie znaleziono gniazd!</p>
+                {% endfor %}
+            </div>
+
+            {% if form.socket.errors %}
+            <div class="alert alert-danger mt-3">
+                {{ form.socket.errors }}
+            </div>
+            {% endif %}
+
+            <!-- IN/OUT Selection for SEP Socket -->
+            <div id="bagSourceSelection" style="display: none;">
+                <hr class="my-4">
+                <h4 class="mb-3">
+                    <i class="fas fa-arrows-alt-v me-2"></i> Wybierz Kierunek
+                </h4>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="category-card" style="background-color: #35593d;" onclick="selectBagSource('IN');">
+                            <input type="radio" name="bag_source" value="IN" id="id_bag_source_in" class="category-radio" 
+                                   {% if request.POST.bag_source == 'IN' %}checked{% endif %}>
+                            <div class="card-body" style="padding: 15px; width: 100%; height: 100%;">
+                                <i class="fas fa-arrow-down" style="font-size: 2rem; margin-bottom: 8px;"></i>
+                                <div class="category-name">IN</div>
+                                <small>Przedmioty przychodzące</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="category-card" style="background-color: #82444a;" onclick="selectBagSource('OUT');">
+                            <input type="radio" name="bag_source" value="OUT" id="id_bag_source_out" class="category-radio"
+                                   {% if request.POST.bag_source == 'OUT' %}checked{% endif %}>
+                            <div class="card-body" style="padding: 15px; width: 100%; height: 100%;">
+                                <i class="fas fa-arrow-up" style="font-size: 2rem; margin-bottom: 8px;"></i>
+                                <div class="category-name">OUT</div>
+                                <small>Przedmioty wychodzące</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="wizard-buttons">
+                <a href="{% url 'sorting:dashboard' %}" class="btn btn-outline-secondary btn-tablet">
+                    <i class="fas fa-times me-1"></i> Anuluj
+                </a>
+                <div></div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function selectSocket(socketId) {
+    // Remove selected class from all cards
+    const categoryCards = document.querySelectorAll('.category-card');
+    categoryCards.forEach(function(card) {
+        card.classList.remove('selected');
+    });
+    
+    // Add selected class to clicked card
+    const selectedCard = document.querySelector(`input[value="${socketId}"]`).closest('.category-card');
+    selectedCard.classList.add('selected');
+    
+    // Check the corresponding radio button
+    const radioButton = document.getElementById(`id_socket_${socketId}`);
+    if (radioButton) {
+        radioButton.checked = true;
+    }
+    
+    // Check if this is SEP socket (ID = 1)
+    const bagSourceSelection = document.getElementById('bagSourceSelection');
+    if (socketId == 1) { // SEP socket ID
+        // Show bag source selection for SEP
+        bagSourceSelection.style.display = 'block';
+        
+        // Clear any previous bag source selection
+        const bagSourceRadios = document.querySelectorAll('input[name="bag_source"]');
+        bagSourceRadios.forEach(function(radio) {
+            radio.checked = false;
+        });
+        
+        // Remove selected class from bag source cards
+        const bagSourceCards = bagSourceSelection.querySelectorAll('.category-card');
+        bagSourceCards.forEach(function(card) {
+            card.classList.remove('selected');
+        });
+    } else {
+        // Hide bag source selection for non-SEP sockets
+        bagSourceSelection.style.display = 'none';
+        
+        // Auto-submit after short delay for non-SEP sockets
+        setTimeout(function() {
+            document.getElementById('socketWizardForm').submit();
+        }, 200);
+    }
+}
+
+function selectBagSource(bagSource) {
+    // Remove selected class from all bag source cards
+    const bagSourceCards = document.querySelectorAll('#bagSourceSelection .category-card');
+    bagSourceCards.forEach(function(card) {
+        card.classList.remove('selected');
+    });
+    
+    // Add selected class to clicked card
+    const selectedCard = document.querySelector(`input[value="${bagSource}"]`).closest('.category-card');
+    selectedCard.classList.add('selected');
+    
+    // Check the corresponding radio button
+    const radioButton = document.getElementById(`id_bag_source_${bagSource.toLowerCase()}`);
+    if (radioButton) {
+        radioButton.checked = true;
+    }
+    
+    // Auto-submit after short delay for visual feedback
+    setTimeout(function() {
+        document.getElementById('socketWizardForm').submit();
+    }, 200);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Pre-select any checked socket radio button
+    const checkedSocketRadio = document.querySelector('input[name="socket"]:checked');
+    if (checkedSocketRadio) {
+        const parentCard = checkedSocketRadio.closest('.category-card');
+        if (parentCard) {
+            parentCard.classList.add('selected');
+            
+            // If separator socket (ID = 1) is selected, show bag source selection
+            const socketId = checkedSocketRadio.value;
+            if (socketId == 1) {
+                const bagSourceSelection = document.getElementById('bagSourceSelection');
+                bagSourceSelection.style.display = 'block';
+            }
+        }
+    }
+    
+    // Pre-select any checked bag_source radio button
+    const checkedBagSourceRadio = document.querySelector('input[name="bag_source"]:checked');
+    if (checkedBagSourceRadio) {
+        const parentCard = checkedBagSourceRadio.closest('.category-card');
+        if (parentCard) {
+            parentCard.classList.add('selected');
+        }
+    }
+});
+</script>
+{% endblock %}

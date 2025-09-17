@@ -1,0 +1,84 @@
+{% extends 'sorting/base.html' %}
+
+{% block title %}Sockets - Sortownia Odzieży{% endblock %}
+
+{% block header %}Gniazda Sortownicze{% endblock %}
+
+
+{% block content %}
+<div class="sockets-grid">
+    {% for socket in sockets %}
+    <div class="socket-card {% if not socket.is_active %}inactive{% endif %}">
+        <div class="socket-header">
+            <div class="socket-status {% if socket.is_active %}active{% else %}inactive{% endif %}">
+                {% if socket.is_active %}
+                    <i class="fas fa-check me-1"></i> Aktywne
+                {% else %}
+                    <i class="fas fa-times me-1"></i> Nieaktywne
+                {% endif %}
+            </div>
+            <div class="socket-id">
+                <i class="fas fa-plug me-2"></i>
+                {{ socket.socket_name }}
+            </div>
+            <div class="socket-location">
+                <i class="fas fa-map-marker-alt me-1"></i>
+                {{ socket.location }}
+            </div>
+        </div>
+        
+        <div class="socket-content">
+            <div class="socket-stats">
+                <div class="stat-item">
+                    <div class="stat-number">{{ socket.capacity|default:"∞" }}</div>
+                    <div class="stat-label">Pojemność</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ socket.current_load|default:"0" }}</div>
+                    <div class="stat-label">Obecne Obciążenie</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ socket.bag_count }}</div>
+                    <div class="stat-label">Wszystkie Worki</div>
+                </div>
+            </div>
+            
+            {% if socket.capacity %}
+            <div class="capacity-bar">
+                <div class="capacity-label">
+                    <span>Wykorzystanie Pojemności</span>
+                    <span>{{ socket.current_load|default:"0" }}/{{ socket.capacity }}</span>
+                </div>
+                <div class="progress-container">
+                    {% with usage_percent=socket.current_load|default:0|floatformat:0 %}
+                    {% with capacity=socket.capacity|default:1 %}
+                    <div class="progress-bar {% if usage_percent < 70 %}low{% elif usage_percent < 90 %}medium{% else %}high{% endif %}" 
+                         style="width: {% widthratio socket.current_load|default:0 socket.capacity 100 %}%">
+                    </div>
+                    {% endwith %}
+                    {% endwith %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="socket-actions">
+                <a href="{% url 'sorting:socket_detail' socket.id %}" class="btn-socket primary">
+                    <i class="fas fa-eye me-1"></i> View Details
+                </a>
+                {% if socket.is_active %}
+                <a href="{% url 'sorting:step1_socket_selection' %}?socket={{ socket.id }}" class="btn-socket success">
+                    <i class="fas fa-plus me-1"></i> Add Bag
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+        <i class="fas fa-plug"></i>
+        <h3>No sockets found</h3>
+        <p>Contact your administrator to set up sorting sockets.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends 'sorting/base.html' %}
+
+{% block title %}Personnel - Sortownia{% endblock %}
+
+{% block content %}
+<h1>Personel Sortowni</h1>
+
+<table>
+    <thead>
+        <tr>
+            <th>Imię</th>
+            <th>ID Pracownika</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Status</th>
+            <th>Posortowane Worki</th>
+            <th>Zmiana</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for person in personnel %}
+        <tr>
+            <td>{{ person.name }}</td>
+            <td>{{ person.employee_id }}</td>
+            <td>{{ person.email|default:"-" }}</td>
+            <td>{{ person.phone|default:"-" }}</td>
+            <td>
+                {% if person.is_active %}
+                <span class="status-badge status-processed">Aktywny</span>
+                {% else %}
+                <span class="status-badge status-pending">Inactive</span>
+                {% endif %}
+            </td>
+            <td>{{ person.bags_sorted }}</td>
+            <td>
+                {% if person.shift_start and person.shift_end %}
+                {{ person.shift_start|time:"H:i" }} - {{ person.shift_end|time:"H:i" }}
+                {% else %}
+                -
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="7">No personnel found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

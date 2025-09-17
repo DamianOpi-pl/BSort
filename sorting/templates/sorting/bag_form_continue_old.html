@@ -1,0 +1,75 @@
+{% extends 'sorting/base.html' %}
+
+{% block title %}Bag Created Successfully - Sortownia{% endblock %}
+
+{% block content %}
+<div class="card text-center">
+    <h2 class="text-success mb-4">✓ Bag Created Successfully!</h2>
+    
+    <div class="success-details mb-4">
+        <p><strong>Bag ID:</strong> {{ bag.bag_id }}</p>
+        <p><strong>Socket:</strong> {{ socket_name }}</p>
+        <p><strong>Weight:</strong> {{ bag.weight_kg }} kg</p>
+        <p><strong>Created:</strong> {{ bag.received_at|date:"M d, Y H:i" }}</p>
+    </div>
+    
+    <div class="continue-options">
+        <h4 class="mb-3">What would you like to do next?</h4>
+        
+        <form method="post" action="{% url 'sorting:continue_or_finish' %}" class="d-inline">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="continue_same_socket">
+            <button type="submit" class="btn btn-primary btn-lg me-3">
+                Add Another Bag<br>
+                <small>(Same Socket: {{ socket_name }})</small>
+            </button>
+        </form>
+        
+        <form method="post" action="{% url 'sorting:continue_or_finish' %}" class="d-inline">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="continue_new_socket">
+            <button type="submit" class="btn btn-secondary btn-lg me-3">
+                Add Bag<br>
+                <small>(Different Socket)</small>
+            </button>
+        </form>
+        
+        <form method="post" action="{% url 'sorting:continue_or_finish' %}" class="d-inline">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="finish">
+            <button type="submit" class="btn btn-success btn-lg">
+                Finish<br>
+                <small>(View All Bags)</small>
+            </button>
+        </form>
+    </div>
+</div>
+
+<style>
+.success-details {
+    background-color: #d4edda;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+.continue-options {
+    margin-top: 2rem;
+}
+
+.btn-lg {
+    padding: 0.75rem 1.5rem;
+    margin: 0.5rem;
+}
+
+.btn-lg small {
+    display: block;
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.text-success {
+    color: #27ae60 !important;
+}
+</style>
+{% endblock %}
