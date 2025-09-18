@@ -82,28 +82,32 @@ class SortingPersonAdmin(admin.ModelAdmin):
 
 @admin.register(Bag)
 class BagAdmin(admin.ModelAdmin):
-    list_display = ('bag_id', 'socket', 'bag_type', 'bag_subtype', 'quality_grade', 'item_count', 'weight_kg', 'extra', 'is_processed', 'sorting_person', 'received_at')
-    list_filter = ('bag_type', 'bag_subtype', 'quality_grade', 'extra', 'is_processed', 'received_at', 'socket')
+    list_display = ('bag_id', 'socket', 'bag_source', 'bag_type', 'bag_subtype', 'quality_grade', 'item_count', 'weight_kg', 'extra', 'is_processed', 'auto_processed_by_next_bag', 'processing_time_display', 'sorting_person', 'received_at')
+    list_filter = ('bag_type', 'bag_subtype', 'quality_grade', 'extra', 'is_processed', 'auto_processed_by_next_bag', 'bag_source', 'received_at', 'socket')
     search_fields = ('bag_id', 'notes')
-    readonly_fields = ('received_at', 'processed_at', 'updated_at')
+    readonly_fields = ('received_at', 'processed_at', 'updated_at', 'processing_time_seconds', 'auto_processed_by_next_bag')
     raw_id_fields = ('socket', 'sorting_person', 'bag_type', 'bag_subtype')
     actions = ['mark_as_extra', 'mark_as_standard']
     
     fieldsets = (
         ('Informacje Podstawowe', {
-            'fields': ('bag_id', 'socket', 'bag_type', 'bag_subtype', 'quality_grade')
+            'fields': ('bag_id', 'socket', 'bag_source', 'bag_type', 'bag_subtype', 'quality_grade')
         }),
         ('Szczegóły Zawartości', {
             'fields': ('item_count', 'weight_kg', 'extra', 'notes')
         }),
         ('Przetwarzanie', {
-            'fields': ('sorting_person', 'is_processed')
+            'fields': ('sorting_person', 'is_processed', 'auto_processed_by_next_bag', 'processing_time_seconds')
         }),
         ('Znaczniki Czasu', {
             'fields': ('received_at', 'processed_at', 'updated_at'),
             'classes': ('collapse',)
         }),
     )
+    
+    def processing_time_display(self, obj):
+        return obj.get_processing_duration() or '-'
+    processing_time_display.short_description = 'Processing Time'
     
     def mark_as_extra(self, request, queryset):
         """Mark selected bags as extra"""

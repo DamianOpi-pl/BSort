@@ -17,10 +17,16 @@
                 {% if bag.is_processed %}
                     <span class="status-badge status-success">
                         <i class="fas fa-check me-1"></i> Przetworzony
+                        {% if bag.auto_processed_by_next_bag %}
+                            <small>(auto)</small>
+                        {% endif %}
                     </span>
                 {% else %}
                     <span class="status-badge status-pending">
                         <i class="fas fa-clock me-1"></i> Oczekujący
+                        {% if bag.is_separator_in_bag %}
+                            <small>(Separator IN)</small>
+                        {% endif %}
                     </span>
                 {% endif %}
             </div>
@@ -136,6 +142,27 @@
                     <div class="detail-item">
                         <div class="detail-label">Data Przetworzenia</div>
                         <div class="detail-value">{{ bag.processed_at|date:"d M Y, H:i" }}</div>
+                    </div>
+                    {% endif %}
+                    {% if bag.processing_time_seconds %}
+                    <div class="detail-item">
+                        <div class="detail-label">Czas Przetwarzania</div>
+                        <div class="detail-value">
+                            <span class="processing-time">{{ bag.get_processing_duration }}</span>
+                            {% if bag.auto_processed_by_next_bag %}
+                                <span class="auto-processed-note">(automatycznie zakończony)</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if bag.bag_source %}
+                    <div class="detail-item">
+                        <div class="detail-label">Źródło (SEP)</div>
+                        <div class="detail-value">
+                            <span class="source-badge source-{{ bag.bag_source|lower }}">
+                                {{ bag.bag_source }}
+                            </span>
+                        </div>
                     </div>
                     {% endif %}
                     <div class="detail-item">
@@ -382,6 +409,29 @@
 .status-shipped { background-color: #d1ecf1; color: #0c5460; }
 .status-delivered { background-color: #d4edda; color: #155724; }
 .status-returned { background-color: #f8d7da; color: #721c24; }
+
+.processing-time {
+    font-weight: 600;
+    color: #007bff;
+    font-size: 1.1rem;
+}
+
+.auto-processed-note {
+    font-size: 0.8rem;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.source-badge {
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: white;
+}
+
+.source-in { background-color: #28a745; }
+.source-out { background-color: #dc3545; }
 
 .packaging-notes {
     margin-top: 1rem;

@@ -104,14 +104,95 @@ class Bag(models.Model):
     is_processed = models.BooleanField(default=False)
     extra = models.BooleanField(default=False, help_text="Prawda jeśli wybrano parametr Dodatkowy")
     notes = models.TextField(blank=True)
+    # Time tracking for Separator IN bags
+    bag_source = models.CharField(max_length=3, blank=True, help_text="IN or OUT for SEP socket")
+    processing_time_seconds = models.IntegerField(null=True, blank=True, help_text="Time spent in separator (seconds)")
+    auto_processed_by_next_bag = models.BooleanField(default=False, help_text="True if automatically processed by next bag")
     received_at = models.DateTimeField(auto_now_add=True)
     processed_at = models.DateTimeField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
+        # Handle automatic processing for Separator IN bags
+        if not self.pk:  # New bag being created
+            self._handle_separator_processing()
+        
         if self.is_processed and not self.processed_at:
             self.processed_at = timezone.now()
         super().save(*args, **kwargs)
+
+    def _handle_separator_processing(self):
+        """Handle automatic processing logic for Separator IN bags"""
+        if (self.socket.socket_id == 'SEP' and 
+            self.bag_source == 'IN'):
+            
+            # Find the most recent pending Separator IN bag
+            previous_bag = Bag.objects.filter(
+                socket__socket_id='SEP',
+                bag_source='IN',
+                is_processed=False
+            ).order_by('-received_at').first()
+            
+            if previous_bag:
+                # Calculate processing time for the previous bag
+                time_diff = timezone.now() - previous_bag.received_at
+                previous_bag.processing_time_seconds = int(time_diff.total_seconds())
+                previous_bag.is_processed = True
+                previous_bag.auto_processed_by_next_bag = True
+                previous_bag.save()
+
+    def get_processing_duration(self):
+        """Get human-readable processing duration"""
+        if not self.processing_time_seconds:
+            return None
+        
+        hours = self.processing_time_seconds // 3600
+        minutes = (self.processing_time_seconds % 3600) // 60
+        seconds = self.processing_time_seconds % 60
+        
+        if hours > 0:
+            return f"{hours}h {minutes}m {seconds}s"
+        elif minutes > 0:
+            return f"{minutes}m {seconds}s"
+        else:
+            return f"{seconds}s"
+
+    def is_separator_in_bag(self):
+        """Check if this is a Separator IN bag"""
+        return self.socket.socket_id == 'SEP' and self.bag_source == 'IN'
+
+    @classmethod
+    def generate_next_bag_id(cls):
+        """Generate the next sequential bag ID"""
+        from django.db import transaction
+        
+        with transaction.atomic():
+            # Get all existing bag numbers to find the highest
+            existing_bags = cls.objects.filter(
+                bag_id__startswith='BAG_'
+            ).values_list('bag_id', flat=True)
+            
+            existing_numbers = []
+            for bag_id in existing_bags:
+                try:
+                    # Extract number from bag ID (e.g., "BAG_000023" -> 23)
+                    number = int(bag_id.split('_')[1])
+                    existing_numbers.append(number)
+                except (ValueError, IndexError):
+                    continue
+            
+            # Find the next available number
+            if existing_numbers:
+                next_number = max(existing_numbers) + 1
+            else:
+                next_number = 1
+            
+            # Ensure uniqueness by checking if this ID already exists
+            while cls.objects.filter(bag_id=f"BAG_{next_number:06d}").exists():
+                next_number += 1
+            
+            # Format with leading zeros (6 digits)
+            return f"BAG_{next_number:06d}"
 
     def __str__(self):
         return f"Bag {self.bag_id} - {self.bag_type.name}"

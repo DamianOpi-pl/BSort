@@ -9,7 +9,6 @@ from django.db.models import Count, Q
 from django.core.serializers.json import DjangoJSONEncoder
 from .models import Socket, Bag, SortedBag, SortingPerson, BagType, BagSubtype
 from .forms import SocketSelectionForm, BagTypeSelectionForm, BagSubtypeSelectionForm, WeightForm
-import uuid
 import json
 
 
@@ -374,11 +373,19 @@ class Step4SummaryView(LoginRequiredMixin, View):
         if 'bag_subtype_id' in form_data:
             bag_subtype = BagSubtype.objects.get(id=form_data['bag_subtype_id'])
         
-        # Generate unique bag ID
-        bag_id = f"BAG_{uuid.uuid4().hex[:8].upper()}"
+        # Generate sequential numerical bag ID
+        bag_id = Bag.generate_next_bag_id()
         
         # Check if Extra parameter was selected
         extra = form_data.get('parameter') == 'Extra'
+        
+        # Get bag_source for SEP socket
+        bag_source = form_data.get('bag_source', '')
+        
+        # Set initial processing status based on socket and source
+        is_processed = True  # Default for most bags
+        if socket.socket_id == 'SEP' and bag_source == 'IN':
+            is_processed = False  # Separator IN bags start as pending
         
         bag = Bag.objects.create(
             bag_id=bag_id,
@@ -388,7 +395,9 @@ class Step4SummaryView(LoginRequiredMixin, View):
             weight_kg=form_data['weight_kg'],
             notes=form_data['notes'],
             item_count=1,  # Default to 1 for now
-            extra=extra
+            extra=extra,
+            bag_source=bag_source,
+            is_processed=is_processed
         )
         
         # Ask if user wants to add another bag
