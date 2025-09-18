@@ -3,11 +3,24 @@ from .models import Socket, BagType, BagSubtype
 
 
 class SocketSelectionForm(forms.Form):
-    socket = forms.ModelChoiceField(
-        queryset=Socket.objects.filter(is_active=True).order_by('order'),
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        empty_label="Wybierz gniazdo..."
-    )
+    def __init__(self, user=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if user:
+            # Filter sockets to only those the user has access to
+            queryset = Socket.objects.filter(
+                is_active=True,
+                users=user
+            ).order_by('order')
+        else:
+            # Fallback to all active sockets if no user provided
+            queryset = Socket.objects.filter(is_active=True).order_by('order')
+        
+        self.fields['socket'] = forms.ModelChoiceField(
+            queryset=queryset,
+            widget=forms.Select(attrs={'class': 'form-control'}),
+            empty_label="Wybierz gniazdo..."
+        )
+    
     bag_source = forms.ChoiceField(
         choices=[('IN', 'IN'), ('OUT', 'OUT')],
         required=False,

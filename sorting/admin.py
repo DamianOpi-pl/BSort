@@ -54,9 +54,10 @@ class BagSubtypeAdmin(admin.ModelAdmin):
 
 @admin.register(Socket)
 class SocketAdmin(admin.ModelAdmin):
-    list_display = ('socket_id', 'socket_name', 'color_box', 'location', 'is_active','order')
-    list_filter = ('is_active',)
+    list_display = ('socket_id', 'socket_name', 'color_box', 'location', 'is_active', 'order', 'user_count')
+    list_filter = ('is_active', 'users')
     search_fields = ('socket_id', 'socket_name', 'location')
+    filter_horizontal = ('users',)
 
     def color_box(self, obj):
         return format_html(
@@ -64,7 +65,11 @@ class SocketAdmin(admin.ModelAdmin):
             obj.socket_color
         )
 
+    def user_count(self, obj):
+        return obj.users.count()
+
     color_box.short_description = "Kolor"
+    user_count.short_description = "Liczba użytkowników"
 
 
 @admin.register(SortingPerson)
@@ -117,6 +122,7 @@ class BagAdmin(admin.ModelAdmin):
             f'Pomyślnie oznaczono {updated} worków jako Standardowe (nie dodatkowe).'
         )
     mark_as_standard.short_description = "Oznacz wybrane worki jako Standardowe"
+
 
 
 @admin.register(SortedBag)

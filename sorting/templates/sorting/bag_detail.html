@@ -1,0 +1,425 @@
+{% extends 'sorting/base.html' %}
+
+{% block title %}{{ bag.bag_id }} - Sortownia Odzieży{% endblock %}
+
+{% block header %}Szczegóły Worka{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="bag-detail-container">
+        <!-- Bag Header -->
+        <div class="bag-detail-header">
+            <div class="bag-detail-title">
+                <i class="fas fa-shopping-bag me-2"></i>
+                <h2>{{ bag.bag_id }}</h2>
+            </div>
+            <div class="bag-status">
+                {% if bag.is_processed %}
+                    <span class="status-badge status-success">
+                        <i class="fas fa-check me-1"></i> Przetworzony
+                    </span>
+                {% else %}
+                    <span class="status-badge status-pending">
+                        <i class="fas fa-clock me-1"></i> Oczekujący
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="bag-detail-content">
+            <!-- Basic Information -->
+            <div class="detail-section">
+                <h3 class="section-title">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Informacje Podstawowe
+                </h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">Gniazdo</div>
+                        <div class="detail-value">
+                            <span class="socket-badge" style="background-color: {{ bag.socket.socket_color }};">
+                                {{ bag.socket.socket_id }}
+                            </span>
+                            {{ bag.socket.socket_name }}
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Typ Worka</div>
+                        <div class="detail-value">
+                            <span class="type-badge" style="background-color: {{ bag.bag_type.color }};">
+                                {{ bag.bag_type.code }}
+                            </span>
+                            {{ bag.bag_type.name }}
+                        </div>
+                    </div>
+                    {% if bag.bag_subtype %}
+                    <div class="detail-item">
+                        <div class="detail-label">Podtyp</div>
+                        <div class="detail-value">
+                            <span class="subtype-badge" style="background-color: {{ bag.bag_subtype.color }};">
+                                {{ bag.bag_subtype.code }}
+                            </span>
+                            {{ bag.bag_subtype.name }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="detail-item">
+                        <div class="detail-label">Parametr</div>
+                        <div class="detail-value">
+                            {% if bag.extra %}
+                                <span class="parameter-badge extra">Extra</span>
+                            {% else %}
+                                <span class="parameter-badge standard">Standard</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Physical Details -->
+            <div class="detail-section">
+                <h3 class="section-title">
+                    <i class="fas fa-weight me-2"></i>
+                    Szczegóły Fizyczne
+                </h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">Waga</div>
+                        <div class="detail-value">
+                            <span class="weight-value">{{ bag.weight_kg|default:"-" }}</span>
+                            {% if bag.weight_kg %}kg{% endif %}
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Liczba Elementów</div>
+                        <div class="detail-value">{{ bag.item_count|default:"-" }}</div>
+                    </div>
+                    {% if bag.quality_grade %}
+                    <div class="detail-item">
+                        <div class="detail-label">Klasa Jakości</div>
+                        <div class="detail-value">
+                            <span class="quality-badge quality-{{ bag.quality_grade|lower }}">
+                                Klasa {{ bag.quality_grade }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Processing Information -->
+            <div class="detail-section">
+                <h3 class="section-title">
+                    <i class="fas fa-user-cog me-2"></i>
+                    Informacje o Przetwarzaniu
+                </h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">Osoba Sortująca</div>
+                        <div class="detail-value">
+                            {% if bag.sorting_person %}
+                                <span class="person-badge" style="background-color: {{ bag.sorting_person.person_color }};">
+                                    {{ bag.sorting_person.person_id }}
+                                </span>
+                                {{ bag.sorting_person.name }}
+                            {% else %}
+                                <span class="text-muted">Nie przypisano</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Data Odbioru</div>
+                        <div class="detail-value">{{ bag.received_at|date:"d M Y, H:i" }}</div>
+                    </div>
+                    {% if bag.processed_at %}
+                    <div class="detail-item">
+                        <div class="detail-label">Data Przetworzenia</div>
+                        <div class="detail-value">{{ bag.processed_at|date:"d M Y, H:i" }}</div>
+                    </div>
+                    {% endif %}
+                    <div class="detail-item">
+                        <div class="detail-label">Ostatnia Aktualizacja</div>
+                        <div class="detail-value">{{ bag.updated_at|date:"d M Y, H:i" }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes -->
+            {% if bag.notes %}
+            <div class="detail-section">
+                <h3 class="section-title">
+                    <i class="fas fa-sticky-note me-2"></i>
+                    Notatki
+                </h3>
+                <div class="notes-content">
+                    {{ bag.notes|linebreaks }}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Sorted Bag Information -->
+            {% if sorted_bag %}
+            <div class="detail-section">
+                <h3 class="section-title">
+                    <i class="fas fa-shipping-fast me-2"></i>
+                    Informacje o Wysyłce
+                </h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">Przeznaczenie</div>
+                        <div class="detail-value">
+                            <span class="destination-badge destination-{{ sorted_bag.destination }}">
+                                {{ sorted_bag.get_destination_display }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Status Wysyłki</div>
+                        <div class="detail-value">
+                            <span class="shipping-status status-{{ sorted_bag.status }}">
+                                {{ sorted_bag.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                    {% if sorted_bag.tracking_number %}
+                    <div class="detail-item">
+                        <div class="detail-label">Numer Śledzenia</div>
+                        <div class="detail-value">{{ sorted_bag.tracking_number }}</div>
+                    </div>
+                    {% endif %}
+                    {% if sorted_bag.shipped_at %}
+                    <div class="detail-item">
+                        <div class="detail-label">Data Wysyłki</div>
+                        <div class="detail-value">{{ sorted_bag.shipped_at|date:"d M Y, H:i" }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if sorted_bag.packaging_notes %}
+                <div class="packaging-notes">
+                    <h4>Notatki Pakowania:</h4>
+                    <p>{{ sorted_bag.packaging_notes|linebreaks }}</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Actions -->
+        <div class="bag-detail-actions">
+            <a href="{% url 'sorting:bag_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Powrót do Listy
+            </a>
+            {% if not bag.is_processed %}
+            <button class="btn btn-gradient-primary" onclick="markAsProcessed()">
+                <i class="fas fa-check me-1"></i> Oznacz jako Przetworzony
+            </button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.bag-detail-container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.bag-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: white;
+    border-radius: var(--radius-medium);
+    box-shadow: var(--shadow-light);
+}
+
+.bag-detail-title {
+    display: flex;
+    align-items: center;
+}
+
+.bag-detail-title h2 {
+    margin: 0;
+    color: var(--text-color);
+    font-size: 1.8rem;
+}
+
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-small);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.status-success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.detail-section {
+    background: white;
+    border-radius: var(--radius-medium);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-light);
+}
+
+.section-title {
+    margin-bottom: 1rem;
+    color: var(--text-color);
+    font-size: 1.2rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: #6c757d;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-value {
+    font-size: 1rem;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.socket-badge, .type-badge, .subtype-badge, .person-badge {
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    color: white;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.parameter-badge {
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.parameter-badge.extra {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.parameter-badge.standard {
+    background-color: #6c757d;
+    color: white;
+}
+
+.quality-badge {
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.quality-a { background-color: #28a745; color: white; }
+.quality-b { background-color: #ffc107; color: #212529; }
+.quality-c { background-color: #dc3545; color: white; }
+
+.weight-value {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.notes-content {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: var(--radius-small);
+    border-left: 4px solid var(--primary-color);
+}
+
+.destination-badge {
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: white;
+}
+
+.destination-retail { background-color: #28a745; }
+.destination-outlet { background-color: #ffc107; color: #212529; }
+.destination-donation { background-color: #17a2b8; }
+.destination-recycling { background-color: #6c757d; }
+.destination-disposal { background-color: #dc3545; }
+
+.shipping-status {
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.status-pending { background-color: #fff3cd; color: #856404; }
+.status-shipped { background-color: #d1ecf1; color: #0c5460; }
+.status-delivered { background-color: #d4edda; color: #155724; }
+.status-returned { background-color: #f8d7da; color: #721c24; }
+
+.packaging-notes {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: var(--radius-small);
+}
+
+.bag-detail-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    padding: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .bag-detail-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .bag-detail-actions {
+        flex-direction: column;
+    }
+}
+</style>
+
+<script>
+function markAsProcessed() {
+    if (confirm('Czy na pewno chcesz oznaczyć ten worek jako przetworzony?')) {
+        // Add AJAX call here to mark bag as processed
+        alert('Funkcja będzie wkrótce dostępna');
+    }
+}
+</script>
+{% endblock %}

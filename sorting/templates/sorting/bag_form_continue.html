@@ -103,15 +103,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const progressBar = document.getElementById('progressBar');
     const countdownContainer = document.getElementById('countdownContainer');
     
-    // Initialize progress bar
+    // Initialize progress bar to 100%
     progressBar.style.width = '100%';
+    progressBar.style.backgroundColor = '#3498db';
+    progressBar.style.transition = 'width 1s linear';
     
     const updateCountdown = () => {
         if (!countdownActive) return;
-        
-        countdownTimer.textContent = countdown;
-        const progressPercent = (countdown / 5) * 100;
-        progressBar.style.width = progressPercent + '%';
         
         if (countdown <= 0) {
             // Auto-submit the "Add Another Bag" form
@@ -120,9 +118,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         countdown--;
+        countdownTimer.textContent = countdown;
+        const progressPercent = (countdown / 5) * 100;
+        progressBar.style.width = progressPercent + '%';
     };
     
-    // Start the countdown
+    // Start the countdown - call updateCountdown immediately, then every second
     const countdownInterval = setInterval(updateCountdown, 1000);
     
     // Stop countdown if user interacts with any button

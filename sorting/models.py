@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.contrib.auth.models import User
 from colorfield.fields import ColorField
 from multiselectfield import MultiSelectField
 
@@ -12,6 +13,8 @@ class Socket(models.Model):
     location = models.CharField(max_length=100)
     is_active = models.BooleanField(default=True)
     order = models.IntegerField(default=0)
+    # Users who have access to this socket
+    users = models.ManyToManyField(User, blank=True, related_name='accessible_sockets')
 
     def __str__(self):
         return f"{self.socket_id} - {self.socket_name }"
@@ -115,6 +118,7 @@ class Bag(models.Model):
 
     class Meta:
         ordering = ['-received_at']
+
 
 
 class SortedBag(models.Model):

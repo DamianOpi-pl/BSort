@@ -143,6 +143,11 @@ class Step1SocketSelectionView(LoginRequiredMixin, FormView):
     form_class = SocketSelectionForm
     success_url = reverse_lazy('sorting:step2_bagtype_selection')
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
     def form_valid(self, form):
         socket = form.cleaned_data['socket']
         bag_source = form.cleaned_data.get('bag_source')
