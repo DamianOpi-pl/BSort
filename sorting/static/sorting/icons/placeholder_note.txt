@@ -1,0 +1,14 @@
+PWA Icon Placeholder Instructions:
+
+To complete the PWA setup, you need to create the following icon files:
+- icon-192x192.png (192x192 pixels)
+- icon-512x512.png (512x512 pixels) 
+- apple-touch-icon.png (180x180 pixels)
+- favicon.ico (16x16, 32x32 pixels)
+
+You can:
+1. Use an online icon generator (e.g., realfavicongenerator.net)
+2. Create them manually using design software
+3. Use the provided create_icons.py script with Pillow installed
+
+The icons should feature the BSort branding with a blue theme (#0d6efd) and include a t-shirt symbol to represent the clothing sorting functionality.

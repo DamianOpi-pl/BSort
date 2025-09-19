@@ -23,6 +23,27 @@ class Socket(models.Model):
         ordering = ['socket_id']
 
 
+class BagTypeCategory(models.Model):
+    """Categories for organizing bag subtypes (e.g., Basic Clothing, Outerwear, etc.)"""
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+    color = ColorField(default='#87CEEB', help_text="Background color for this category")
+    icon = models.CharField(max_length=50, default='fas fa-layer-group', 
+                           help_text="FontAwesome icon class (e.g., 'fas fa-tshirt')")
+    order = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(1000)],
+                               help_text="Display order (lower numbers appear first)")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ['order', 'name']
+        verbose_name = 'Bag Type Category'
+        verbose_name_plural = 'Bag Type Categories'
+
+
 class BagType(models.Model):
     PARAMETER_CHOICES = [
         ('Standard', 'Standard'),
@@ -69,19 +90,26 @@ class SortingPerson(models.Model):
 class BagSubtype(models.Model):
     """Subtypes for specific bag types (e.g., A Grade, B Grade)"""
     bag_type = models.ForeignKey(BagType, on_delete=models.CASCADE, related_name='subtypes')
+    category = models.ForeignKey(BagTypeCategory, on_delete=models.SET_NULL, null=True, blank=True, 
+                                related_name='subtypes', help_text="Category for organizing this subtype")
     name = models.CharField(max_length=100)
     code = models.CharField(max_length=10, blank=True)
     description = models.TextField(blank=True)
-    order = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(1000)])
-    color = ColorField(default='#808080')
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def display_color(self):
+        """Return the color from the assigned category, or a default if no category"""
+        if self.category:
+            return self.category.color
+        return '#808080'  # Default gray for uncategorized items
 
     def __str__(self):
         return f"{self.bag_type.name} - {self.name}"
 
     class Meta:
-        ordering = ['order', 'name']
+        ordering = ['name']  # Sort alphabetically by name
         unique_together = ['bag_type', 'name']
 
 

@@ -2,11 +2,11 @@
 
 {% block title %}Wybierz Podtyp - Krok 2b - Sortownia Odzieży{% endblock %}
 
-{% block header %}Dodaj Worek - Krok 2b{% endblock %}
+{% block page_header %}{% endblock %}
 
 
 {% block content %}
-<div class="container-fluid py-4">
+<div class="container-fluid py-2">
     <!-- Step Indicator -->
     <div class="steps-indicator mb-4">
         <div class="step step-1 completed">
@@ -44,26 +44,87 @@
         <form method="post" id="subtypeWizardForm">
             {% csrf_token %}
             
-            <div class="category-grid">
-                {% for subtype in form.bag_subtype.field.queryset %}
-                <div class="category-card" style="background-color: {{ subtype.color }};" onclick="selectSubtype({{ subtype.id }});">
-                    <input type="radio" name="bag_subtype"
-                           value="{{ subtype.id }}"
-                           id="id_bag_subtype_{{ subtype.id }}"
-                           class="category-radio"
-                           {% if form.bag_subtype.value == subtype.id %}checked{% endif %}>
-                    <div class="card-body" style="padding: 15px; width: 100%; height: 100%;">
-                        <i class="fas fa-layer-group" style="font-size: 2rem; margin-bottom: 8px;"></i>
-                        <div class="category-name">{{ subtype.name }}</div>
-                        <div class="category-details">
-                            {% if subtype.code %}{{ subtype.code }}{% endif %}
+            <!-- Get all categories that have subtypes in this bag type -->
+            {% load sorting_extras %}
+            {% get_categories_for_bag_type form.bag_subtype.field.queryset as categories_with_subtypes %}
+            
+            {% for category_data in categories_with_subtypes %}
+                {% if category_data.category %}
+                    <!-- Category with proper grouping -->
+                    <div class="category-section" data-category="{{ category_data.category.name|slugify }}" style="--category-color: {{ category_data.category.color }}">
+                        <div class="category-header" onclick="toggleCategory(this)" style="background: linear-gradient(135deg, {{ category_data.category.color }} 0%, {{ category_data.category.color }}dd 100%);">
+                            <div class="category-title">
+                                <i class="{{ category_data.category.icon }}"></i>
+                                {{ category_data.category.name }}
+                                <span class="category-count">{{ category_data.subtypes|length }}</span>
+                            </div>
+                            <div class="category-toggle">
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                        </div>
+                        <div class="category-content">
+                            <div class="category-grid-grouped">
+                                {% for subtype in category_data.subtypes %}
+                                <div class="category-card" style="background-color: {{ subtype.display_color }};" onclick="selectSubtype({{ subtype.id }});">
+                                    <input type="radio" name="bag_subtype"
+                                           value="{{ subtype.id }}"
+                                           id="id_bag_subtype_{{ subtype.id }}"
+                                           class="category-radio"
+                                           {% if form.bag_subtype.value == subtype.id %}checked{% endif %}>
+                                    <div class="card-body" style="padding: 15px; width: 100%; height: 100%;">
+                                        <i class="{{ category_data.category.icon }}" style="font-size: 1.8rem; margin-bottom: 8px;"></i>
+                                        <div class="category-name">{{ subtype.name }}</div>
+                                        <div class="category-details">
+                                            {% if subtype.code %}{{ subtype.code }}{% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
                         </div>
                     </div>
+                {% else %}
+                    <!-- Uncategorized items -->
+                    <div class="category-section" data-category="uncategorized">
+                        <div class="category-header" onclick="toggleCategory(this)">
+                            <div class="category-title">
+                                <i class="fas fa-layer-group"></i>
+                                Uncategorized Items
+                                <span class="category-count">{{ category_data.subtypes|length }}</span>
+                            </div>
+                            <div class="category-toggle">
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                        </div>
+                        <div class="category-content">
+                            <div class="category-grid-grouped">
+                                {% for subtype in category_data.subtypes %}
+                                <div class="category-card" style="background-color: {{ subtype.display_color }};" onclick="selectSubtype({{ subtype.id }});">
+                                    <input type="radio" name="bag_subtype"
+                                           value="{{ subtype.id }}"
+                                           id="id_bag_subtype_{{ subtype.id }}"
+                                           class="category-radio"
+                                           {% if form.bag_subtype.value == subtype.id %}checked{% endif %}>
+                                    <div class="card-body" style="padding: 15px; width: 100%; height: 100%;">
+                                        <i class="fas fa-layer-group" style="font-size: 1.8rem; margin-bottom: 8px;"></i>
+                                        <div class="category-name">{{ subtype.name }}</div>
+                                        <div class="category-details">
+                                            {% if subtype.code %}{{ subtype.code }}{% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            {% empty %}
+                <div class="empty-state">
+                    <i class="fas fa-layer-group"></i>
+                    <h3>Nie znaleziono podtypów!</h3>
+                    <p>Brak dostępnych podtypów dla wybranego typu worka.</p>
                 </div>
-                {% empty %}
-                <p>Nie znaleziono podtypów!</p>
-                {% endfor %}
-            </div>
+            {% endfor %}
 
             {% if form.bag_subtype.errors %}
             <div class="alert alert-danger mt-3">
@@ -82,6 +143,25 @@
 </div>
 
 <script>
+function toggleCategory(headerElement) {
+    const categorySection = headerElement.closest('.category-section');
+    const content = categorySection.querySelector('.category-content');
+    const header = categorySection.querySelector('.category-header');
+    
+    // Toggle expanded state
+    const isExpanded = content.classList.contains('expanded');
+    
+    if (isExpanded) {
+        // Collapse
+        content.classList.remove('expanded');
+        header.classList.remove('expanded');
+    } else {
+        // Expand
+        content.classList.add('expanded');
+        header.classList.add('expanded');
+    }
+}
+
 function selectSubtype(subtypeId) {
     // Remove selected class from all cards
     const categoryCards = document.querySelectorAll('.category-card');
@@ -106,14 +186,57 @@ function selectSubtype(subtypeId) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Pre-select any checked radio button
+    // Pre-select any checked radio button and expand its category
     const checkedRadio = document.querySelector('input[type="radio"]:checked');
     if (checkedRadio) {
         const parentCard = checkedRadio.closest('.category-card');
+        const parentSection = checkedRadio.closest('.category-section');
+        
         if (parentCard) {
             parentCard.classList.add('selected');
         }
+        
+        // Expand the category containing the selected item
+        if (parentSection) {
+            const header = parentSection.querySelector('.category-header');
+            const content = parentSection.querySelector('.category-content');
+            if (header && content) {
+                header.classList.add('expanded');
+                content.classList.add('expanded');
+            }
+        }
     }
+    
+    // Add keyboard navigation
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            const focused = document.activeElement;
+            if (focused && focused.classList.contains('category-header')) {
+                e.preventDefault();
+                toggleCategory(focused);
+            }
+        }
+    });
+    
+    // Make category headers focusable for accessibility
+    const categoryHeaders = document.querySelectorAll('.category-header');
+    categoryHeaders.forEach(header => {
+        header.setAttribute('tabindex', '0');
+        header.setAttribute('role', 'button');
+        header.setAttribute('aria-expanded', 'false');
+        
+        // Update aria-expanded when toggled
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    const isExpanded = header.classList.contains('expanded');
+                    header.setAttribute('aria-expanded', isExpanded.toString());
+                }
+            });
+        });
+        
+        observer.observe(header, { attributes: true, attributeFilter: ['class'] });
+    });
 });
 </script>
 {% endblock %}

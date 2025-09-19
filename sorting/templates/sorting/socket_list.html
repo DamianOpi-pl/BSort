@@ -5,7 +5,7 @@
 {% block header %}Gniazda Sortownicze{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
+<div class="container-fluid py-2">
     <div class="sockets-grid-improved">
         {% for socket in sockets %}
         <div class="socket-card-improved {% if not socket.is_active %}inactive{% endif %}">

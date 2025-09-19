@@ -1,6 +1,43 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Socket, Bag, SortedBag, SortingPerson, BagType, BagSubtype
+from .models import Socket, Bag, SortedBag, SortingPerson, BagType, BagSubtype, BagTypeCategory
+
+
+@admin.register(BagTypeCategory)
+class BagTypeCategoryAdmin(admin.ModelAdmin):
+    list_display = ('name', 'color_box', 'icon_display', 'order', 'subtype_count', 'is_active', 'created_at')
+    list_filter = ('is_active', 'created_at')
+    search_fields = ('name', 'description')
+    readonly_fields = ('created_at',)
+    ordering = ('order', 'name')
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('name', 'description', 'order', 'is_active')
+        }),
+        ('Display Settings', {
+            'fields': ('color', 'icon')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def color_box(self, obj):
+        return format_html(
+            '<div style="width: 30px; height: 20px; background-color: {}; border-radius: 4px; border: 1px solid #ddd;"></div>',
+            obj.color
+        )
+    color_box.short_description = "Color"
+    
+    def icon_display(self, obj):
+        return format_html('<i class="{}"></i> {}', obj.icon, obj.icon)
+    icon_display.short_description = "Icon"
+    
+    def subtype_count(self, obj):
+        return obj.subtypes.count()
+    subtype_count.short_description = "Subtypes"
 
 
 @admin.register(BagType)
@@ -32,24 +69,61 @@ class BagTypeAdmin(admin.ModelAdmin):
 
 @admin.register(BagSubtype)
 class BagSubtypeAdmin(admin.ModelAdmin):
-    list_display = ('bag_type', 'name', 'code', 'order', 'color', 'is_active', 'created_at')
-    list_filter = ('bag_type', 'is_active', 'created_at')
+    list_display = ('bag_type', 'name', 'code', 'category', 'category_color_box', 'is_active', 'created_at')
+    list_filter = ('bag_type', 'category', 'is_active', 'created_at')
     search_fields = ('name', 'code', 'description')
     readonly_fields = ('created_at',)
     raw_id_fields = ('bag_type',)
+    list_editable = ('category',)
+    actions = ['assign_to_category', 'clear_category']
     
     fieldsets = (
         ('Informacje Podstawowe', {
-            'fields': ('bag_type', 'name', 'code', 'order')
+            'fields': ('bag_type', 'category', 'name', 'code')
         }),
         ('Wyświetlanie', {
-            'fields': ('color', 'description', 'is_active')
+            'fields': ('description', 'is_active')
         }),
         ('Znaczniki Czasu', {
             'fields': ('created_at',),
             'classes': ('collapse',)
         }),
     )
+    
+    def category_color_box(self, obj):
+        color = obj.display_color
+        category_name = obj.category.name if obj.category else "No Category"
+        return format_html(
+            '<div style="width: 30px; height: 20px; background-color: {}; border-radius: 4px; border: 1px solid #ddd;" title="{}"></div>',
+            color,
+            category_name
+        )
+    category_color_box.short_description = "Category Color"
+    
+    def assign_to_category(self, request, queryset):
+        """Custom action to assign selected subtypes to a category"""
+        from django.contrib.admin.helpers import ActionForm
+        from django import forms
+        
+        class CategoryActionForm(ActionForm):
+            category = forms.ModelChoiceField(
+                queryset=BagTypeCategory.objects.filter(is_active=True),
+                required=True,
+                label="Category"
+            )
+        
+        # This would need additional view logic for the form
+        self.message_user(request, "Use the Category field in the list to assign categories directly.")
+    assign_to_category.short_description = "Assign to category"
+    
+    def clear_category(self, request, queryset):
+        """Clear category assignment for selected subtypes"""
+        updated = queryset.update(category=None)
+        self.message_user(
+            request,
+            f'Successfully cleared category for {updated} subtypes.'
+        )
+    clear_category.short_description = "Clear category assignment"
 
 
 @admin.register(Socket)

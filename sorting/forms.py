@@ -64,7 +64,7 @@ class BagSubtypeSelectionForm(forms.Form):
             queryset = BagSubtype.objects.filter(bag_type_id=bag_type_id, is_active=True)
             
             self.fields['bag_subtype'] = forms.ModelChoiceField(
-                queryset=queryset.order_by('order'),
+                queryset=queryset,  # Will use model's default ordering (alphabetical by name)
                 widget=forms.Select(attrs={'class': 'form-control'}),
                 empty_label="Wybierz podtyp..."
             )
